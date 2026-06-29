@@ -1,0 +1,50 @@
+name: Generate HeyGen Mandarin Video
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_script:
+        description: "Optional Chinese script. Leave empty to use the default noodle shop script."
+        required: false
+        type: string
+      timeout_minutes:
+        description: "Maximum minutes to wait for HeyGen rendering."
+        required: false
+        default: "30"
+        type: string
+      poll_seconds:
+        description: "Seconds between status checks."
+        required: false
+        default: "10"
+        type: string
+
+jobs:
+  generate-video:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Generate HeyGen video
+        id: heygen
+        env:
+          HEYGEN_API_KEY: ${{ secrets.HEYGEN_API_KEY }}
+          HEYGEN_AVATAR_ID: ${{ secrets.HEYGEN_AVATAR_ID }}
+          HEYGEN_VOICE_ID: ${{ secrets.HEYGEN_VOICE_ID }}
+          VIDEO_SCRIPT: ${{ inputs.video_script }}
+          HEYGEN_TIMEOUT_MINUTES: ${{ inputs.timeout_minutes }}
+          HEYGEN_POLL_SECONDS: ${{ inputs.poll_seconds }}
+        run: node generate_video.js
+
+      - name: Print video link
+        run: |
+          echo "video_url=${{ steps.heygen.outputs.video_url }}"
+          echo "## HeyGen video" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "${{ steps.heygen.outputs.video_url }}" >> "$GITHUB_STEP_SUMMARY"
